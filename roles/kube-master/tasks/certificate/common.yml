@@ -158,6 +158,15 @@
     state: link
   run_once: true
   delegate_to: "{{ groups['kube-master']|first }}"
+  when: not managed_by_choerodon
+
+- name: 软链 sa 证书私钥为 kube-controller-manager 证书私钥
+  file: 
+    src: /etc/kubernetes/pki/sa.key
+    dest: /etc/kubernetes/pki/kube-controller-manager.key
+    state: link
+  run_once: true
+  when: managed_by_choerodon 
 
 - name: 创建 kube-controller-manager 证书请求
   shell: >

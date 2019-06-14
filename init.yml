@@ -1,0 +1,50 @@
+# 校验节点软件系统及硬件系统、安装必要基础组件、docker、kubeadm、kubelet、kubectl
+- hosts: 
+  - own
+  roles:
+  - prepare/base
+  - prepare/docker
+  - prepare/kubernetes
+
+# 进行apiserver负载均衡
+- hosts: 
+  - own
+  roles:
+  - role: load-balancer
+
+# 安装etcd，并分发etcd证书到master节点
+- hosts: 
+  - own
+  roles:
+  - role: etcd
+    when: inventory_hostname in groups['etcd']
+
+# 生成master节点证书，初始化master节点
+- hosts: 
+  - own
+  roles:
+  - role: kube-master
+    when: inventory_hostname in (groups['kube-master'] + groups['new-master'])
+
+# 初始化worker节点
+- hosts: 
+  - own
+  roles:
+  - role: kube-worker
+    when: inventory_hostname in groups['kube-worker']
+
+# todo: 使用go代码添加
+# # 标记各节点角色
+# - hosts: 
+#   - all
+#   roles:
+#   - post
+
+# # 安装基础插件
+- hosts: 
+  - own
+  roles:
+  - { role: addons/flannel, when: cluster_network =='flannel' }
+  - { role: addons/ingress-nginx }
+  - { role: addons/metrics-server }
+#   - { role: addons/kubernetes-dashboard }

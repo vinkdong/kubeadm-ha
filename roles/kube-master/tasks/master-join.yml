@@ -1,3 +1,10 @@
+# 获取密钥状态
+- include_tasks: certificate/certs_stat.yml
+  when: managed_by_choerodon
+# 生成公共证书
+- include_tasks: certificate/common.yml
+  when: managed_by_choerodon
+
 # 生成该节点 kubelet证书
 - include_tasks: certificate/respective.yml
 

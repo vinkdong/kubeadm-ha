@@ -73,3 +73,4 @@
   assert:
     that: groups['etcd']|length is odd
     msg: "etcd 节点数量必须为奇数，请添加或减少 etcd 节点数量至奇数个。"
+  when: not managed_by_choerodon

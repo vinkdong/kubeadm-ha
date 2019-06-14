@@ -36,10 +36,11 @@
   - include_tasks: certificate/certs_stat.yml
   # 生成证书
   - include_tasks: certificate/generate.yml
-  when: inventory_hostname == groups['etcd']|first
+  when: inventory_hostname == groups['etcd']|first or managed_by_choerodon
 
 # 分发证书
 - include_tasks: certificate/distribute.yml
+  when: not managed_by_choerodon
 
 - block:
   - name: 读取 etcd static pod yaml 文件 stat 信息
@@ -49,7 +50,7 @@
 
   - name: 设置变量 CLUSTER_STATE
     set_fact: CLUSTER_STATE="existing"
-    when: etcd_static_pod_stat.stat.exists
+    when: etcd_static_pod_stat.stat.exists or etcd_endpoints != ""
 
   - name: 生成 etcd static pod 文件
     template: 
@@ -82,6 +83,20 @@
   - name: 重新加载 daemon
     systemd:
       daemon_reload: yes
+
+  - name: 注册新的节点到etcd中
+    ignore_errors: yes
+    shell: >
+      docker run --name etcd-healthcheck --net host -e ETCDCTL_API=3 
+      -v /etc/kubernetes/pki/etcd:/etc/kubernetes/pki/etcd
+      --rm {{ etcd_image }}
+      etcdctl 
+      --endpoints={{ etcd_endpoints }}
+      --cacert=/etc/kubernetes/pki/etcd/ca.crt
+      --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt
+      --key=/etc/kubernetes/pki/etcd/healthcheck-client.key
+      member add etcd-{{ inventory_hostname }} --peer-urls=https://{{ CURRENT_HOST_IP }}:2380
+    when: etcd_endpoints != ""
 
   - name: 临时启动 kubelet 以引导 etcd 运行
     service:
