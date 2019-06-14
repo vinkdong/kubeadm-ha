@@ -195,8 +195,6 @@ network_plugin: "flannel"
 flannel_backend: "vxlan"
 # flannel 镜像地址
 flannel_image: quay.azk8s.cn/coreos/flannel:v0.11.0-amd64
-# 选择默认网卡
-flannel_iface: true
 
 # calico mtu
 calico_veth_mtu: 1440
